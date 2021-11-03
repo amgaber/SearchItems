@@ -1,0 +1,6 @@
+framework module Pods_SearchItems_SearchItemsUITests {
+  umbrella header "Pods-SearchItems-SearchItemsUITests-umbrella.h"
+
+  export *
+  module * { export * }
+}
