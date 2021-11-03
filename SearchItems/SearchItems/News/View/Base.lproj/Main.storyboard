@@ -22,7 +22,7 @@
                                 <rect key="frame" x="10" y="98" width="394" height="51"/>
                                 <textInputTraits key="textInputTraits"/>
                             </searchBar>
-                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="WJc-me-z7I">
+                            <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFill" pagingEnabled="YES" showsHorizontalScrollIndicator="NO" bouncesZoom="NO" dataMode="prototypes" translatesAutoresizingMaskIntoConstraints="NO" id="WJc-me-z7I">
                                 <rect key="frame" x="10" y="159" width="394" height="693"/>
                                 <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                 <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="wIB-L0-TRI">
