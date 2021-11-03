@@ -8,5 +8,5 @@
 import Foundation
 
 
-// Keychain key
+// API key
 let kKeyAPIKey = ""
