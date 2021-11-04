@@ -6,6 +6,8 @@
 //
 
 import Foundation
+import Alamofire
+
 struct NewsListViewModel : Decodable{
     let title:String?
     let description: String?
@@ -27,4 +29,16 @@ struct NewsListViewModel : Decodable{
         image = model.image
         pageOfImage = model.pageOfImage
     }
+    
+    
+    var pageIndex: Int = 1
+    var shouldPaginate: Bool = true
+    
+    var items = [NewData]()
+    var nextPageInfo : String = ""
+    
+    var itemsCount: Int {
+        return items.count
+    }
+    
 }

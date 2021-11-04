@@ -7,7 +7,7 @@
 
 import UIKit
 import Alamofire
-
+import RxSwift
 class NewsListViewController: UIViewController {
 
     @IBOutlet weak var newsItemCardList: UICollectionView!
@@ -16,10 +16,14 @@ class NewsListViewController: UIViewController {
     var searchActive : Bool = false
     private var filtered = [NewData]()
     
-    
     private var news = [NewData]()
     let APIKEY = kKeyAPIKey
     
+    typealias ViewModel = NewsListViewModel
+    var viewModel: NewsListViewModel!
+    
+    private let disposeBag = DisposeBag()
+
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
@@ -35,17 +39,8 @@ class NewsListViewController: UIViewController {
         //register collectionViewCell
         registerXIBCell()
         
-
         //call Api
-//        getNewsList()
-        
-        //for test
-        news.append(NewData(title: "test", description: "sdgsdghsaghhgdaldagdjagdjas", author: "Alaa", source: Source(id: "", name: "source"), content: "kdjjdalja", date: "20/3/2021", image: "https://www.reuters.com/pf/resources/images/reuters/reuters-default.png?d=55", pageOfImage: "https://www.wired.com/story/big-tech-ethics-bug-bounty/"))
-        news.append(NewData(title: "mobile iphone", description: "sdgsdghsaghhgdaldagdjagdjas", author: "Alaa", source: Source(id: "", name: "source"), content: "kdjjdalja", date: "20/3/2021", image: "https://images.hindustantimes.com/tech/img/2021/11/03/1600x900/75e22248-2c0a-11ec-8f97-860cbef0b633_1635923815766_1635923838060.jpg", pageOfImage: "https://www.wired.com/story/big-tech-ethics-bug-bounty/"))
-        news.append(NewData(title: "mobile iphone", description: "sdgsdghsaghhgdaldagdjagdjas", author: "Alaa", source: Source(id: "", name: "source"), content: "kdjjdalja", date: "20/3/2021", image: "https://images.hindustantimes.com/tech/img/2021/11/03/1600x900/75e22248-2c0a-11ec-8f97-860cbef0b633_1635923815766_1635923838060.jpg", pageOfImage: "https://www.wired.com/story/big-tech-ethics-bug-bounty/"))
-        news.append(NewData(title: "mobile iphone", description: "sdgsdghsaghhgdaldagdjagdjas", author: "Alaa", source: Source(id: "", name: "source"), content: "kdjjdalja", date: "20/3/2021", image: "https://images.hindustantimes.com/tech/img/2021/11/03/1600x900/75e22248-2c0a-11ec-8f97-860cbef0b633_1635923815766_1635923838060.jpg", pageOfImage: "https://www.wired.com/story/big-tech-ethics-bug-bounty/"))
-        self.newsItemCardList.reloadData()
-        filtered = news
+        getNewsList()
 
     }
 
@@ -56,15 +51,49 @@ class NewsListViewController: UIViewController {
     
     
     func getNewsList(){
-        let requestNews = AF.request("https://newsapi.org/v2/everything?q=Apple&from=2021-11-03&sortBy=popularity&apiKey=\(APIKEY)")
-        requestNews.responseDecodable(of: DataResult.self) { (response) in
-//             guard let data = response.result else { return }
-//            self.news = data
-            debugPrint("response: ", response.result)
-            
-            self.newsItemCardList.reloadData()
-        }
-    }
+        AF.request("https://newsapi.org/v2/everything?q=Apple&from=2021-11-03&sortBy=popularity&apiKey=\(APIKEY)").validate().responseJSON { response in
+
+                       guard response.response?.statusCode != 403 else
+                       {
+                          print("Session expired, Must relogin")
+                           return
+                       }
+                       guard response.response?.statusCode != 500 else
+                       {
+                           print("Something Went wrong, please refresh")
+                           return
+                       }
+                       guard response.response?.statusCode != 504 else
+                       {
+                           debugPrint("Gateway timeout, Please refresh")
+                           return
+                       }
+                       switch response.result {
+                       case .success:
+                           do{
+                               debugPrint("res:" , response.result)
+                               let res = try JSONDecoder().decode(DataResult.self, from:response.data!)
+                               debugPrint("DataResult:" , res.articles?.count)
+                            
+                               self.news = res.articles ?? []
+                               debugPrint("title:",res.articles?[1].title)
+
+                               self.filtered = self.news
+
+                               self.newsItemCardList.reloadData()
+                           }
+                          catch {
+                              debugPrint(error.localizedDescription)
+
+//                              completionHandler(nil, error)
+                          }
+                       case .failure(let error):
+
+
+                           debugPrint(error.localizedDescription)
+//                           completionHandler(nil, error)
+                       }
+        }}
 
 }
 
@@ -87,8 +116,58 @@ extension NewsListViewController: UICollectionViewDelegate,UICollectionViewDataS
             return cell
     }
     
+    func collectionView(_ collectionView: UICollectionView,
+                                layout collectionViewLayout: UICollectionViewLayout,
+                                sizeForItemAt indexPath: IndexPath) -> CGSize {
+        return CGSize(width: UIScreen.main.bounds.width , height: 400)
+    }
+
+    func collectionView(_ collectionView: UICollectionView,
+                                layout collectionViewLayout: UICollectionViewLayout,
+                                minimumInteritemSpacingForSectionAt section: Int) -> CGFloat {
+                return 1.0
+    }
+
+    func collectionView(_ collectionView: UICollectionView, layout
+        collectionViewLayout: UICollectionViewLayout,
+                        minimumLineSpacingForSectionAt section: Int) -> CGFloat {
+        return 1.0
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+   
+        let storyboard = UIStoryboard(name: "Details", bundle: nil)
+            let vc = storyboard.instantiateViewController(withIdentifier: "NewsDetailsViewController") as! NewsDetailsViewController
+        let newsModel = searchActive == true ?  filtered[indexPath.row] : news[indexPath.row]
+//        vc.configure(with: NewsListViewModel(with: newsModel))
+//        self.navigationController?.pushViewController(vc, animated: true)
+        
+        self.imageTapped(imageURL: newsModel.image ?? "")
+
+    }
     
     
+    func imageTapped(imageURL:String){
+        let url = URL(string: imageURL)
+        let newImageView = UIImageView(image: UIImage())
+        newImageView.kf.setImage(with: url)
+        
+        newImageView.frame = UIScreen.main.bounds
+        newImageView.backgroundColor = .black
+        newImageView.contentMode = .scaleAspectFit
+        newImageView.isUserInteractionEnabled = true
+        let tap = UITapGestureRecognizer(target: self, action: #selector(dismissFullscreenImage))
+        newImageView.addGestureRecognizer(tap)
+        self.view.addSubview(newImageView)
+        self.navigationController?.isNavigationBarHidden = true
+        self.tabBarController?.tabBar.isHidden = true
+    }
+
+    @objc func dismissFullscreenImage(_ sender: UITapGestureRecognizer) {
+        self.navigationController?.isNavigationBarHidden = false
+        self.tabBarController?.tabBar.isHidden = false
+        sender.view?.removeFromSuperview()
+    }
 }
 
 

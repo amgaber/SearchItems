@@ -9,7 +9,8 @@ target 'SearchItems' do
 
 pod 'Alamofire', '~> 5.4'
 pod 'Kingfisher', '~> 7.0'
-
+pod 'RxSwift', '~> 4.0'
+pod 'RxCocoa', '~> 4.0'
 
   target 'SearchItemsTests' do
     inherit! :search_paths
